@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Webchat</title>
+</head>
+
+<body>
+
+  <ul id="users">
+    <li id="user"></li>
+  </ul>
+  <ul id="messages"></ul>
+  <form action="" id="formUser">
+    <input id="nameInput" type="text" data-testid="nickname-box">
+    <button data-testid="nickname-button">Alterar Nickname</button>
+  </form>
+  <form action="" id="formMessage">
+    <input id="messageInput" type="text" placeholder="Digite sua mensagem" data-testid="message-box">
+    <button data-testid="send-button">Enviar</button>
+  </form>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const formMessage = document.querySelector('#formMessage');
+    const inputMessage = document.querySelector('#messageInput');
+    const formUser = document.querySelector('#formUser');
+    const inputUser = document.querySelector('#nameInput');
+    const userLi = document.querySelector('#user');
+
+
+
+    // https://www.ti-enxame.com/pt/javascript/gere-stringcaracteres-aleatorios-em-javascript/967048592/
+    const getNewNickname = () => {
+      let name = "";
+      const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      for (let i = 0; i < 16; i++)
+        name += possible.charAt(Math.floor(Math.random() * possible.length));
+      return name;
+    }
+
+    let nickname = getNewNickname();
+
+    // https://www.horadecodar.com.br/2020/03/30/javascript-mudar-a-posicao-de-um-elemento-no-array/
+    const changePosition = (arr, from, to) => {
+      arr.splice(to, 0, arr.splice(from, 1)[0]);
+      return arr;
+    };
+
+    formMessage.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const message = {
+        nickname: nickname,
+        chatMessage: inputMessage.value,
+      }
+      socket.emit('message', message);
+      inputMessage.value = '';
+      return false;
+    });
+
+    const createMessage = (message) => {
+      const messagesUl = document.querySelector('#messages');
+      const li = document.createElement('li');
+      li.innerText = message;
+      // https://developer.mozilla.org/pt-BR/docs/Web/API/Element/setAttribute
+      li.setAttribute("data-testid", "message")
+      messagesUl.appendChild(li);
+    };
+
+    formUser.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const newNickname = inputUser.value;
+      nickname = newNickname;
+      socket.emit('updateNickname', newNickname);
+      inputUser.value = '';
+      return false;
+    })
+
+    const createUsers = (users) => {
+      const usersUl = document.querySelector('#users');
+      usersUl.innerHTML = '';
+      // https://www.horadecodar.com.br/2020/03/30/javascript-mudar-a-posicao-de-um-elemento-no-array/
+      const indexUser = users.findIndex((user) => user.id === socket.id)
+      const arrayMod = changePosition(users, indexUser, 0)
+      users.map((user) => {
+        const usersUl = document.querySelector('#users');
+        const li = document.createElement('li');
+        li.innerText = user.user;
+        li.setAttribute("data-testid", "online-user");
+        usersUl.appendChild(li);
+      })
+    }
+
+    const createMessagesBD = async (messages) => {
+      const messagesUl = document.querySelector('#messages');
+      messagesUl.innerHTML = '';
+      await messages.map((message) => {
+        const li = document.createElement('li');
+        li.innerText = `${message.data} ${message.nickname} ${message.message}`;
+        // https://developer.mozilla.org/pt-BR/docs/Web/API/Element/setAttribute
+        li.setAttribute("data-testid", "message")
+        messagesUl.appendChild(li);
+      })
+
+    }
+
+    socket.on('connect', () => {
+      socket.emit('newUser', nickname);
+      userLi.innerHTML = nickname;
+      socket.emit('messagesBD')
+      socket.on('messagesBD', async (messages) => {
+        await createMessagesBD(messages)
+      });
+    });
+    socket.on('message', (message) => {
+      createMessage(message);
+    });
+    socket.on('updateUsers', (users) => {
+      createUsers(users)
+    })
+
+  </script>
+
+</body>
+
+</html>
