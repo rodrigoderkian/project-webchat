@@ -8,7 +8,6 @@
 <body>
 
   <ul id="users">
-    <li id="user"></li>
   </ul>
   <ul id="messages"></ul>
   <form action="" id="formUser">
@@ -26,9 +25,6 @@
     const inputMessage = document.querySelector('#messageInput');
     const formUser = document.querySelector('#formUser');
     const inputUser = document.querySelector('#nameInput');
-    const userLi = document.querySelector('#user');
-
-
 
     // https://www.ti-enxame.com/pt/javascript/gere-stringcaracteres-aleatorios-em-javascript/967048592/
     const getNewNickname = () => {
@@ -106,7 +102,6 @@
 
     socket.on('connect', () => {
       socket.emit('newUser', nickname);
-      userLi.innerHTML = nickname;
       socket.emit('messagesBD')
       socket.on('messagesBD', async (messages) => {
         await createMessagesBD(messages)

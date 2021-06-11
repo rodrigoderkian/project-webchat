@@ -40,6 +40,7 @@ const newMessage = (message) => {
 };
 
 const updateNick = (socket, newNickname) => {
+  // https://stackoverflow.com/questions/4689856/how-to-change-value-of-object-which-is-inside-an-array-using-javascript-or-jquer/45341595
   const index = onlineUsers.findIndex((user) => user.id === socket.id);
   onlineUsers[index].user = newNickname;
   io.emit('updateUsers', onlineUsers);
